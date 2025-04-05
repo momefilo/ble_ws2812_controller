@@ -11,10 +11,11 @@ from ble_advertising import advertising_payload
 from micropython import const
 
 # Neopixel additional material ############
-from machine import Pin, ADC, Timer
+from machine import Pin
 from neopixel import NeoPixel
-strip1 = NeoPixel(Pin(15), 300)
-strip2 = NeoPixel(Pin(16), 300)
+strip1 = NeoPixel(Pin(15), 37)
+strip2 = NeoPixel(Pin(16), 37)
+stripT = NeoPixel(Pin(14), 25)
 
 #   End of LED additional material  #########
 
@@ -94,20 +95,10 @@ def LoadIniFile(filename):
             valueArray.append((int(s)))
     return bytes(valueArray)
 
-
 aktuall_led = LedStart = LedEnd = Speed = 0
 def demo():    # This part modified to control Neopixel strip
     ble = bluetooth.BLE()
     p = BLESimplePeripheral(ble)
-    def sendTemp(t):
-        if p.is_connected():
-            roh = ADC(4).read_u16()
-            ret = (27-(roh * 3.3 / (65535) - 0.706)/0.001721)
-            p.send(str(ret).encode())
-            
-    sendTemp(0)
-    tim=Timer(-1)
-    tim.init(mode=Timer.PERIODIC, period=10000, callback=sendTemp)
     def writeToStrip(v):
         r1 = v[0]
         g1 = v[1]
@@ -118,6 +109,9 @@ def demo():    # This part modified to control Neopixel strip
         g2 = v[6]
         b2 = v[7]
         speed = v[8]
+        rT = v[9]
+        gT = v[10]
+        bT = v[11]
         global Speed
         Speed = speed
         global LedStart
@@ -139,6 +133,9 @@ def demo():    # This part modified to control Neopixel strip
         # Send the data to the strip
         strip1.write()
         strip2.write()
+        for i in range(0, 25):
+            stripT[i] = (rT,gT,bT)
+        stripT.write()
     
     try:
         valueArray = LoadIniFile("werte.dic")
@@ -154,7 +151,6 @@ def demo():    # This part modified to control Neopixel strip
     
     global aktuall_led
     aktuall_led = 0
-    temperature = 0
     while True:
         if(Speed > 0):
             if aktuall_led < LedEnd:
