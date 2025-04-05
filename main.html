@@ -53,6 +53,18 @@
 <br/>
 <div id="connected">
     <table align="center"><tr>
+	<td><input id="redT" style="width: 3ch;" type="text" value="128"/></td>
+	<td><input id="greenT" style="width: 3ch;" type="text" value="128"/></td>
+	<td><input id="blueT" style="width: 3ch;" type="text" value="128"/></td>
+	<td></td>
+    </tr>
+    <tr>
+	<td><input class="slider" type="range" id="rT" name="rT" min="0" max="255" value="128" onchange = "changeRT(this.value)" style="accent-color: red;"></td>
+	<td><input class="slider" type="range" id="gT" name="gT" min="0" max="255" value="128" onchange = "changeGT(this.value)" style="accent-color: green;"></td>
+	<td><input class="slider" type="range" id="bT" name="bT" min="0" max="255" value="128" onchange = "changeBT(this.value)" style="accent-color: blue;"></td>
+	<td><td><input id="colourPickerT" type="color" value="#808080" onchange = "changePT(this.value)"/></td></td>
+    </tr>
+    <table align="center"><tr>
 	<td><input id="red1" style="width: 3ch;" type="text" value="0"/></td>
 	<td><input id="green1" style="width: 3ch;" type="text" value="0"/></td>
 	<td><input id="blue1" style="width: 3ch;" type="text" value="128"/></td>
@@ -80,13 +92,21 @@
     <br/>
     <input class="button" type="button" id="colourButton" value="Send Colour" />
     <br/>
-    <span id="deviceHeartbeat"></span>°C
+    <span id="deviceHeartbeat"></span>
 </div>
 
 <script>
     const connectButton = document.getElementById('connectButton');
     const disconnectButton = document.getElementById('disconnectButton');
     const colourButton = document.getElementById('colourButton');
+    
+    const mrT = document.getElementById('rT');
+    const mredT = document.getElementById('redT');
+    const mgT = document.getElementById('gT');
+    const mgreenT = document.getElementById('greenT');
+    const mbT = document.getElementById('bT');
+    const mblueT = document.getElementById('blueT');
+    
     const ledStart = document.getElementById('ledStart');
     const ledEnd = document.getElementById('ledEnd');
     const speed = document.getElementById('speed');
@@ -123,6 +143,10 @@
 	    bytes.push(parseInt(hex.substr(c, 2), 16));
 	return bytes;
     }
+    function setColorT(){
+	let c1= [parseInt(mredT.value), parseInt(mgreenT.value), parseInt(mblueT.value)];
+	colourPickerT.value = "#"+toHexString(c1);
+    }
     function setColor1(){
 	let c1= [parseInt(mred1.value), parseInt(mgreen1.value), parseInt(mblue1.value)];
 	colourPicker1.value = "#"+toHexString(c1);
@@ -130,6 +154,15 @@
     function setColor2(){
 	let c1= [parseInt(mred2.value), parseInt(mgreen2.value), parseInt(mblue2.value)];
 	colourPicker2.value = "#"+toHexString(c1);
+    }
+    function changePT(val){
+	arr = hexToBytes(val);
+	mrT.value = arr[0];
+	mredT.value = arr[0];
+	mgT.value = arr[1];
+	mgreenT.value = arr[1];
+	mbT.value = arr[2];
+	mblueT.value = arr[2];
     }
     function changeP1(val){
 	arr = hexToBytes(val);
@@ -148,6 +181,18 @@
 	mgreen2.value = arr[1];
 	mb2.value = arr[2];
 	mblue2.value = arr[2];
+    }
+    function changeRT(val){
+	mredT.value = val;
+	setColorT();
+    }
+    function changeGT(val){
+	mgreenT.value = val;
+	setColorT();
+    }
+    function changeBT(val){
+	mblueT.value = val;
+	setColorT();
     }
     function changeR1(val){
 	mred1.value = val;
@@ -188,7 +233,6 @@
 	connected.style.display = 'block';
 	connectButton.style.display = 'none';
 	disconnectButton.style.display = 'initial';
-	listen()
     };
     const disconnect = () => {
 	device = null;
@@ -202,7 +246,11 @@
 	await device.gatt.disconnect();
 	disconnect();
     };
-    const hexToRgb = (hex1, hex2) => {
+    const hexToRgb = (hexT, hex1, hex2) => {
+	const rT = parseInt(hexT.substring(1, 3), 16);
+	const gT = parseInt(hexT.substring(3, 5), 16);
+	const bT = parseInt(hexT.substring(5, 7), 16);
+	
 	const r1 = parseInt(hex1.substring(1, 3), 16);
 	const g1 = parseInt(hex1.substring(3, 5), 16);
 	const b1 = parseInt(hex1.substring(5, 7), 16);
@@ -212,10 +260,10 @@
 	const g2 = parseInt(hex2.substring(3, 5), 16);
 	const b2 = parseInt(hex2.substring(5, 7), 16);
 	const myspeed = speed.value;
-	return [r1, g1, b1, s, e, r2, g2, b2, myspeed];
+	return [r1, g1, b1, s, e, r2, g2, b2, myspeed, rT, gT, bT];
     };
     colourButton.onclick = async () => {
-	const data = new Uint8Array(hexToRgb(colourPicker1.value, colourPicker2.value));
+	const data = new Uint8Array(hexToRgb(colourPickerT.value, colourPicker1.value, colourPicker2.value));
 	sendCharacteristic.writeValue(data);
     };
     
